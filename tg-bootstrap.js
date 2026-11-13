@@ -6,7 +6,7 @@
   "bot": "Firecom47_Bot",
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
   "fullscreen": true,
-  "packedAt": "2026-11-13T16:28:49.213Z"
+  "packedAt": "2026-11-13T17:12:50.480Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —
