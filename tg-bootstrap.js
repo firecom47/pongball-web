@@ -6,7 +6,7 @@
   "bot": null,
   "scoreEndpoint": null,
   "fullscreen": true,
-  "packedAt": "2026-11-13T13:43:31.587Z"
+  "packedAt": "2026-11-13T14:50:27.930Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —
