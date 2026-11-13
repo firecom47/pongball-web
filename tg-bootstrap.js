@@ -6,7 +6,7 @@
   "bot": null,
   "scoreEndpoint": null,
   "fullscreen": true,
-  "packedAt": "2026-11-13T14:50:27.930Z"
+  "packedAt": "2026-11-13T14:59:43.392Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —
@@ -85,6 +85,28 @@
   }
   applyInsets();
   try { tg.onEvent && tg.onEvent('safeAreaChanged', applyInsets); } catch (e) {}
+
+  // Пауза при сворачивании. Telegram присылает deactivated/activated, когда
+  // приложение уходит на фон или возвращается. Движок Godot слушает window "blur"
+  // и посылает игре NOTIFICATION_WM_WINDOW_FOCUS_OUT — Pongball на нём ставит паузу
+  // (scripts/game/match.gd). Поэтому достаточно «подтолкнуть» события окна.
+  function pokeWindow(type) {
+    try { window.dispatchEvent(new Event(type)); } catch (e) {}
+    try {
+      var c = document.querySelector('canvas');
+      if (c) c.dispatchEvent(new Event(type));
+    } catch (e) {}
+  }
+  try {
+    tg.onEvent && tg.onEvent('deactivated', function () {
+      record('deactivated');
+      pokeWindow('blur');
+    });
+    tg.onEvent && tg.onEvent('activated', function () {
+      record('activated');
+      pokeWindow('focus');
+    });
+  } catch (e) {}
 
   // Telegram может менять размер вьюпорта (fullscreen/сворачивание) — сообщаем движку.
   try {
