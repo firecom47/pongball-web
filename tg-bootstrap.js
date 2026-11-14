@@ -5,8 +5,9 @@
   "name": "pongball",
   "bot": "Firecom47_Bot",
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
+  "resultEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=result",
   "fullscreen": true,
-  "packedAt": "2026-11-14T07:50:41.172Z"
+  "packedAt": "2026-11-14T10:48:37.919Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —
@@ -61,10 +62,28 @@
     }).catch(function () { return null; });
   }
 
+  /**
+   * Один завершённый матч → аналитика (?route=result). Мост для GDScript:
+   * JavaScriptBridge.eval("tgReportResult({...})").
+   * Вне Telegram и без настроенного эндпоинта молча ничего не делает.
+   */
+  function reportResult(payload) {
+    if (!CFG.resultEndpoint) { record('result:no-endpoint'); return Promise.resolve(null); }
+    if (!inTelegram) { record('result:outside-telegram'); return Promise.resolve(null); }
+    record('result', payload && payload.result ? payload.result : 'unknown');
+    var body = Object.assign({}, payload || {}, { initData: tg.initData });
+    return fetch(CFG.resultEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }
+
   // Мост для GDScript: JavaScriptBridge.eval("tgHaptic('medium')")
   window.tgHaptic = haptic;
   window.tgNotify = notify;
   window.tgSubmitScore = submitScore;
+  window.tgReportResult = reportResult;
 
   if (!inTelegram) {
     // Обычный браузер / локальная проверка: ничего не ломаем, просто живём дальше.
