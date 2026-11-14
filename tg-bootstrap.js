@@ -7,7 +7,7 @@
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
   "resultEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=result",
   "fullscreen": true,
-  "packedAt": "2026-11-14T11:51:25.079Z"
+  "packedAt": "2026-11-14T18:23:38.892Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —
@@ -68,15 +68,38 @@
    * Вне Telegram и без настроенного эндпоинта молча ничего не делает.
    */
   function reportResult(payload) {
-    if (!CFG.resultEndpoint) { record('result:no-endpoint'); return Promise.resolve(null); }
-    if (!inTelegram) { record('result:outside-telegram'); return Promise.resolve(null); }
+    // Состояние отправки читает игра (match.gd → _tick_report_status): без него
+    // из Telegram не видно, дошла ли статистика — ошибки fetch молча глотаются.
+    const state = {
+      status: 0,
+      ok: false,
+      error: '',
+      init_data_len: tg && tg.initData ? String(tg.initData).length : 0,
+      at: new Date().toISOString(),
+    };
+    window.__tgGame.lastReport = state;
+
+    if (!CFG.resultEndpoint) { state.error = 'no-endpoint'; record('result:no-endpoint'); return Promise.resolve(null); }
+    if (!inTelegram) { state.error = 'outside-telegram'; record('result:outside-telegram'); return Promise.resolve(null); }
     record('result', payload && payload.result ? payload.result : 'unknown');
+    state.error = 'sending';
     var body = Object.assign({}, payload || {}, { initData: tg.initData });
     return fetch(CFG.resultEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
-    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }).then(function (r) {
+      state.status = r.status;
+      state.ok = r.ok;
+      state.error = r.ok ? '' : 'http-' + r.status;
+      return r.ok ? r.json() : null;
+    }).then(function (data) {
+      if (data) { state.error = ''; state.server = data; }
+      return data;
+    }).catch(function () {
+      state.error = 'network';
+      return null;
+    });
   }
 
   // Мост для GDScript: JavaScriptBridge.eval("tgHaptic('medium')")
