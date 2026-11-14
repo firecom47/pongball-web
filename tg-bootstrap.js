@@ -6,7 +6,7 @@
   "bot": "Firecom47_Bot",
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
   "fullscreen": true,
-  "packedAt": "2026-11-13T17:12:50.480Z"
+  "packedAt": "2026-11-14T05:32:11.325Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —
@@ -51,7 +51,14 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initData: tg.initData, score: Number(score) })
-    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (data) {
+      // Ответ функции ({user_id, best, rank, total}) нужен игре: по нему она
+      // подсвечивает свою строку в таблице рекордов и пишет «Ваше место».
+      if (data) window.__tgGame.lastResult = data;
+      return data;
+    }).catch(function () { return null; });
   }
 
   // Мост для GDScript: JavaScriptBridge.eval("tgHaptic('medium')")
