@@ -7,7 +7,7 @@
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
   "resultEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=result",
   "fullscreen": true,
-  "packedAt": "2026-11-14T18:54:35.428Z"
+  "packedAt": "2026-11-14T18:57:29.305Z"
 };
   var tg = (window.Telegram && window.Telegram.WebApp) || null;
   // Вне Telegram настоящий SDK тоже отдаёт объект WebApp, но с пустым initData —

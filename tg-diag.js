@@ -57,6 +57,7 @@
     lines.push('WebAssembly: ' + (typeof WebAssembly === 'object' ? 'да' : 'НЕТ'));
     lines.push('Telegram: ' + (tg ? 'да' : 'нет') + ', initData: '
       + (tg && tg.initData ? String(tg.initData).length + ' симв.' : 'пусто'));
+    lines.push('Сеть: ' + netState());
 
     var notice = document.getElementById('status-notice');
     var progress = document.getElementById('status-progress');
@@ -69,6 +70,26 @@
       for (var i = 0; i < errors.length; i += 1) lines.push(errors[i]);
     }
     return lines.join('\n');
+  }
+
+  // Замер сети: сколько грузится маленький служебный файл с того же хостинга.
+  // На мобильных сетях GitHub Pages бывает медленным, и 49 МБ сборки «висят».
+  var netText = 'проверяется…';
+  function netState() { return netText; }
+
+  function probeNetwork() {
+    var started = Date.now();
+    var url = 'index.manifest.json?probe=' + started;
+    var timer = setTimeout(function () { netText = 'таймаут 10 с (хостинг не отвечает)'; }, 10000);
+    fetch(url, { cache: 'no-store' }).then(function (response) {
+      clearTimeout(timer);
+      netText = response.ok
+        ? 'ok, ' + (Date.now() - started) + ' мс'
+        : 'HTTP ' + response.status + ' за ' + (Date.now() - started) + ' мс';
+    }).catch(function () {
+      clearTimeout(timer);
+      netText = 'ошибка сети за ' + (Date.now() - started) + ' мс';
+    });
   }
 
   function copyText(text, button) {
@@ -159,7 +180,10 @@
     if (Date.now() - bootAt < 20000) setTimeout(maybeAutoShow, 3000);
   }
 
-  function start() { setTimeout(maybeAutoShow, 2500); }
+  function start() {
+    probeNetwork();
+    setTimeout(maybeAutoShow, 2500);
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
