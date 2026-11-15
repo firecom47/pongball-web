@@ -41,12 +41,29 @@
     }
   }
 
+  // Godot 4 без WebGL2 не рисует кадр: на части WebView это чёрный экран
+  // или вечная загрузка. Текст для игрока, не только для отладки.
+  function webglAdvice() {
+    if (glSupport('webgl2') === 'да') return [];
+    var ua = (navigator && navigator.userAgent) || '';
+    var lines = [
+      'Игра не запустится: в этом браузере нет WebGL2.',
+      'Обновите Android System WebView или откройте ссылку в Chrome.',
+    ];
+    if (/Huawei|HUAWEI|Honor|HONOR/i.test(ua)) {
+      lines.push('На Huawei свой WebView часто без WebGL2: поставьте Chrome и откройте игру в нём.');
+    }
+    return lines;
+  }
+
   function collect() {
     var lines = [];
     var nav = navigator || {};
     var tg = window.Telegram && window.Telegram.WebApp;
 
     lines.push('Pongball — диагностика');
+    var advice = webglAdvice();
+    for (var a = 0; a < advice.length; a += 1) lines.push(advice[a]);
     lines.push('Сборка: ' + (window.__pongballBuild || 'неизвестно'));
     lines.push('UA: ' + (nav.userAgent || '?'));
     lines.push('Ядер: ' + (nav.hardwareConcurrency || '?')
