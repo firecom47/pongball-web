@@ -7,7 +7,7 @@
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
   "resultEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=result",
   "fullscreen": true,
-  "packedAt": "2026-11-15T16:36:18.500Z"
+  "packedAt": "2026-11-16T12:42:59.949Z"
 };
   // initData берём в момент вызова, а не один раз при загрузке страницы.
   // SDK с telegram.org может приехать позже (скрипт async) или не приехать
