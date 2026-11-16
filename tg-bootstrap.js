@@ -7,7 +7,7 @@
   "scoreEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=score",
   "resultEndpoint": "https://functions.yandexcloud.net/d4erv95ru091rdm6d6mb?route=result",
   "fullscreen": true,
-  "packedAt": "2026-11-16T12:42:59.949Z"
+  "packedAt": "2026-11-16T17:24:36.844Z"
 };
   // initData берём в момент вызова, а не один раз при загрузке страницы.
   // SDK с telegram.org может приехать позже (скрипт async) или не приехать
@@ -161,16 +161,36 @@
     console.log('[tg] вне Telegram — Mini App API не активен');
   }
 
-  // Safe area: Telegram сообщает отступы под свои панели. Отдаём их в CSS-переменные,
-  // чтобы при необходимости поджать интерфейс (по умолчанию canvas на весь экран).
+  // Safe area: Telegram отдаёт два набора отступов.
+  //   safeAreaInset       — вырез устройства и статус-бар Android;
+  //   contentSafeAreaInset — панели самого мессенджера (кнопка «Закрыть» сверху,
+  //                          полоса свайпа снизу). Появился в Bot API 8.0.
+  // Раньше читался только первый, поэтому наши кнопки уезжали под UI Telegram:
+  // на телефоне «Закрыть» панели оказывалась ровно под крестиком мессенджера.
+  // Обходить нужно сумму обоих.
+  //
+  // Кроме CSS-переменных кладём значения в window.__tgSafeInsets: GDScript не
+  // видит CSS, а ScreenInsets читает оттуда отступы в пикселях страницы.
+  function safePair(a, b) {
+    return (a || 0) + (b || 0);
+  }
+
   function applyInsets() {
     var tg = currentTelegram();
     var s = (tg && tg.safeAreaInset) || {};
+    var c = (tg && tg.contentSafeAreaInset) || {};
+    var insets = {
+      top: safePair(s.top, c.top),
+      bottom: safePair(s.bottom, c.bottom),
+      left: safePair(s.left, c.left),
+      right: safePair(s.right, c.right)
+    };
     var root = document.documentElement;
-    root.style.setProperty('--tg-safe-top', (s.top || 0) + 'px');
-    root.style.setProperty('--tg-safe-bottom', (s.bottom || 0) + 'px');
-    root.style.setProperty('--tg-safe-left', (s.left || 0) + 'px');
-    root.style.setProperty('--tg-safe-right', (s.right || 0) + 'px');
+    root.style.setProperty('--tg-safe-top', insets.top + 'px');
+    root.style.setProperty('--tg-safe-bottom', insets.bottom + 'px');
+    root.style.setProperty('--tg-safe-left', insets.left + 'px');
+    root.style.setProperty('--tg-safe-right', insets.right + 'px');
+    window.__tgSafeInsets = insets;
     if (tg) root.classList.add('tg-active');
   }
 
@@ -192,6 +212,8 @@
     tg.__pongballEvents = true;
     applyInsets();
     try { tg.onEvent && tg.onEvent('safeAreaChanged', applyInsets); } catch (e) {}
+    try { tg.onEvent && tg.onEvent('contentSafeAreaChanged', applyInsets); } catch (e) {}
+    try { tg.onEvent && tg.onEvent('fullscreenChanged', applyInsets); } catch (e) {}
     try {
       tg.onEvent && tg.onEvent('deactivated', function () {
         record('deactivated');
